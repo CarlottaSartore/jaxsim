@@ -103,6 +103,7 @@ class JaxSimModel(JaxsimDataclass):
         model_description: str | pathlib.Path | rod.Model,
         *,
         model_name: str | None = None,
+        base_link_name: str | None = None,
         time_step: jtp.FloatLike | None = None,
         integrator: (
             jaxsim.integrators.Integrator | type[jaxsim.integrators.Integrator] | None
@@ -147,7 +148,7 @@ class JaxSimModel(JaxsimDataclass):
         # Parse the input resource (either a path to file or a string with the URDF/SDF)
         # and build the -intermediate- model description.
         intermediate_description = jaxsim.parsers.rod.build_model_description(
-            model_description=model_description, is_urdf=is_urdf
+            model_description=model_description, is_urdf=is_urdf, base_link_name=base_link_name
         )
 
         # Lump links together if not all joints are considered.
