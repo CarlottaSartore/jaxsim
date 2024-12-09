@@ -436,6 +436,27 @@ def estimate_good_contact_parameters(
     return parameters
 
 
+def get_idxes_parent_link_contact_point(model: js.model.JaxSimModel) -> jtp.Vector:
+    """
+    Return the name of the collidable points.
+    Args:
+        model: The model to consider.
+    Returns:
+        The name of the collidable points.
+    """
+
+    # Get the indices of the enabled collidable points.
+    indices_of_enabled_collidable_points = (
+        model.kin_dyn_parameters.contact_parameters.indices_of_enabled_collidable_points
+    )
+
+    parent_link_idx_of_enabled_collidable_points = jnp.array(
+        model.kin_dyn_parameters.contact_parameters.body, dtype=int
+    )[indices_of_enabled_collidable_points]
+
+    return parent_link_idx_of_enabled_collidable_points
+
+
 @jax.jit
 def transforms(model: js.model.JaxSimModel, data: js.data.JaxSimModelData) -> jtp.Array:
     r"""
