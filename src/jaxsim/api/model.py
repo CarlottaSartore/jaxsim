@@ -2164,7 +2164,7 @@ def step(
     # =============
 
     # Prepare the references to pass.
-    with references.switch_velocity_representation(data.velocity_representation):
+    with references.switch_velocity_representation(VelRepr.Inertial):
         f_L = references.link_forces(model=model, data=data)
         τ_references = references.joint_force_references(model=model)
 
@@ -2176,27 +2176,34 @@ def step(
         new_velocity = (
             data.generalized_velocity() + generalized_acceleration * model.time_step
         )
+
         base_lin_velocity = new_velocity[:3]
         base_ang_velocity = new_velocity[3:6]
         joint_velocity = new_velocity[6:]
+
+        W_Q_B = data.base_orientation(dcm=False)
+
+        W_Q̇_B = jaxsim.math.Quaternion.derivative(
+            quaternion=W_Q_B,
+            omega=base_ang_velocity,
+            omega_in_body_fixed=False,
+            K=0.01,
+        ).squeeze()
         new_joint_position = data.joint_positions() + joint_velocity * model.time_step
         new_base_position = data.base_position() + base_lin_velocity * model.time_step
-        new_quaternion = jaxsim.math.Quaternion.integration(
-            data.base_orientation(dcm=False), base_ang_velocity, model.time_step
-        )
-        new_position = jnp.hstack(
-            (new_base_position, new_quaternion, new_joint_position)
-        )
+        new_quaternion = W_Q_B + W_Q̇_B * model.time_step
+        new_quaternion = new_quaternion / jnp.linalg.norm(new_quaternion)
+        
         data_tf = data.replace(
             validate=True,
             state=data.state.replace(
                 physics_model=data.state.physics_model.replace(
-                    base_quaternion=new_position[3:7],
-                    base_position=new_position[0:3],
-                    joint_positions=new_position[7:],
-                    joint_velocities=new_velocity[6:],
-                    base_linear_velocity=new_velocity[0:3],
-                    base_angular_velocity=new_velocity[3:6],
+                    base_quaternion=new_quaternion,
+                    base_position=new_base_position,
+                    joint_positions=new_joint_position,
+                    joint_velocities=joint_velocity,
+                    base_linear_velocity=base_lin_velocity,
+                    base_angular_velocity=base_ang_velocity,
                 )
             ),
         )

@@ -164,6 +164,7 @@ class Quaternion:
             pred=omega_in_body_fixed,
             on_true=(W_Q_B_t0 @ jaxlie.SO3.exp(tangent=dt * ω_AB)).wxyz,
             on_false=(jaxlie.SO3.exp(tangent=dt * ω_AB) @ W_Q_B_t0).wxyz,
-        )
+        )   
 
-        return W_Q_B_tf
+        W_Q_B_tf = W_Q_B_tf/jnp.linalg.norm(W_Q_B_tf)
+        return A_Q_B
