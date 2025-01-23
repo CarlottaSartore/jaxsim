@@ -111,6 +111,7 @@ class JaxSimModel(JaxsimDataclass):
         terrain: jaxsim.terrain.Terrain | None = None,
         contact_model: jaxsim.rbda.contacts.ContactModel | None = None,
         is_urdf: bool | None = None,
+        contacts_params: jaxsim.rbda.contacts.ContactsParams | None = None,
         considered_joints: Sequence[str] | None = None,
     ) -> JaxSimModel:
         """
@@ -161,6 +162,7 @@ class JaxSimModel(JaxsimDataclass):
             time_step=time_step,
             terrain=terrain,
             contact_model=contact_model,
+            contacts_params=contacts_params,
         )
 
         # Store the origin of the model, in case downstream logic needs it.
@@ -912,15 +914,15 @@ def forward_dynamics_aba(
     )
 
     # Extract the state in inertial-fixed representation.
-    with data.switch_velocity_representation(VelRepr.Inertial):
-        W_p_B = data.base_position
-        W_v_WB = data.base_velocity()
-        W_Q_B = data.base_orientation(dcm=False)
-        s = data.joint_positions
-        ṡ = data.joint_velocities
+    # with data.switch_velocity_representation(VelRepr.Inertial):
+    W_p_B = data.base_position
+    W_v_WB = data.base_velocity()
+    W_Q_B = data.base_orientation(dcm=False)
+    s = data.joint_positions
+    ṡ = data.joint_velocities
 
     # Extract the inputs in inertial-fixed representation.
-    W_f_L = references._link_forces
+    W_f_L = f_L #references._link_forces
     τ = references._joint_force_references
 
     # ========================
@@ -1791,12 +1793,12 @@ def link_bias_accelerations(
     # Compute the parent-to-child adjoints and the motion subspaces of the joints.
     # These transforms define the relative kinematics of the entire model, including
     # the base transform for both floating-base and fixed-base models.
-    i_X_λi = model.kin_dyn_parameters.joint_transforms(
+    i_X_λi, S = model.kin_dyn_parameters.joint_transforms_and_motion_subspaces(
         joint_positions=data.joint_positions, base_transform=W_H_B
     )
 
     # Extract the joint motion subspaces.
-    S = model.kin_dyn_parameters.motion_subspaces
+    # S = model.kin_dyn_parameters.motion_subspaces
 
     # Allocate the buffer to store the body-fixed link velocities.
     L_v_WL = jnp.zeros(shape=(model.number_of_links(), 6))

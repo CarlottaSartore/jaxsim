@@ -7,7 +7,7 @@ from .skew import Skew
 from .transform import Transform
 from .utils import safe_norm
 
-from .joint_model import JointModel, supported_joint_motion  # isort:skip
+from .joint_model import JointModel, supported_joint_motion, motion_subspace_joint  # isort:skip
 
 
 # Define the default standard gravity constant.

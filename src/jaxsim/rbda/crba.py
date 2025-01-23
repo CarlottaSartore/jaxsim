@@ -33,12 +33,12 @@ def crba(model: js.model.JaxSimModel, *, joint_positions: jtp.Vector) -> jtp.Mat
     # Compute the parent-to-child adjoints of the joints.
     # These transforms define the relative kinematics of the entire model, including
     # the base transform for both floating-base and fixed-base models.
-    i_X_λi = model.kin_dyn_parameters.joint_transforms(
+    i_X_λi, S = model.kin_dyn_parameters.joint_transforms_and_motion_subspaces(
         joint_positions=s, base_transform=jnp.eye(4)
     )
 
     # Extract the joint motion subspaces.
-    S = model.kin_dyn_parameters.motion_subspaces
+    # S = model.kin_dyn_parameters.motion_subspaces
 
     # Allocate the buffer of transforms link -> base.
     i_X_0 = jnp.zeros(shape=(model.number_of_links(), 6, 6))

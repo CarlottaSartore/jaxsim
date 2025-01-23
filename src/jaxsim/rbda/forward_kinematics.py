@@ -58,7 +58,7 @@ def forward_kinematics_model(
     # Compute the parent-to-child adjoints of the joints.
     # These transforms define the relative kinematics of the entire model, including
     # the base transform for both floating-base and fixed-base models.
-    i_X_λi = model.kin_dyn_parameters.joint_transforms(
+    i_X_λi, S = model.kin_dyn_parameters.joint_transforms_and_motion_subspaces(
         joint_positions=s, base_transform=W_H_B.as_matrix()
     )
 
@@ -71,7 +71,7 @@ def forward_kinematics_model(
     W_v_Wi = W_v_Wi.at[0].set(W_v_WB)
 
     # Extract the joint motion subspaces.
-    S = model.kin_dyn_parameters.motion_subspaces
+    # S = model.kin_dyn_parameters.motion_subspaces
 
     # ========================
     # Propagate the kinematics

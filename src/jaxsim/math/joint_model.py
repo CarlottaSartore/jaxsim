@@ -160,10 +160,10 @@ def supported_joint_motion(
     # Prepare the joint position
     s = jnp.array(joint_positions).astype(float)
 
-    def compute_F() -> tuple[jtp.Matrix, jtp.Array]:
+    def compute_F() ->  jtp.Matrix:
         return jaxlie.SE3.identity()
 
-    def compute_R() -> tuple[jtp.Matrix, jtp.Array]:
+    def compute_R() -> jtp.Matrix:
 
         # Get the additional argument specifying the joint axis.
         # This is a metadata required by only some joint types.
@@ -175,7 +175,7 @@ def supported_joint_motion(
 
         return pre_H_suc
 
-    def compute_P() -> tuple[jtp.Matrix, jtp.Array]:
+    def compute_P() -> jtp.Matrix:
 
         # Get the additional argument specifying the joint axis.
         # This is a metadata required by only some joint types.
@@ -196,3 +196,50 @@ def supported_joint_motion(
             compute_P,  # JointType.Prismatic
         ),
     ).as_matrix()
+
+def motion_subspace_joint(
+        joint_types: jtp.Array, joint_axes: jtp.Matrix
+) -> jtp.Array:
+        """
+        Compute the transforms of the joints.
+
+        Args:
+            joint_types: The types of the joints.
+            joint_axes: The axes of the joints.
+
+        Returns:
+            The transforms of the joints.
+        """
+
+
+        def compute_F() ->  jtp.Array:
+            return  jnp.zeros(shape=(6, 1))
+
+        def compute_R() -> jtp.Array:
+
+            # Get the additional argument specifying the joint axis.
+            # This is a metadata required by only some joint types.
+            axis = jnp.array(joint_axes).astype(float).squeeze()
+
+            S = jnp.vstack(jnp.hstack([jnp.zeros(3), axis]))
+            return S
+
+        def compute_P() -> jtp.Array:
+
+            # Get the additional argument specifying the joint axis.
+            # This is a metadata required by only some joint types.
+            axis = jnp.array(joint_axes).astype(float).squeeze()
+
+            S = jnp.vstack(jnp.hstack([axis, jnp.zeros(3)]))
+
+            return S
+
+        return jax.lax.switch(
+            index=joint_types,
+            branches=(
+                compute_F,  # JointType.Fixed
+                compute_R,  # JointType.Revolute
+                compute_P,  # JointType.Prismatic
+            ),
+        )
+        

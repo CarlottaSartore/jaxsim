@@ -950,10 +950,9 @@ class KinematicGraphTransforms:
         """
 
         import jaxsim.math
-
-        return np.array(
-            jaxsim.math.supported_joint_motion(joint_type, joint_position, joint_axis)
-        )
+        H =  jaxsim.math.supported_joint_motion(joint_type, joint_position, joint_axis)
+        
+        return np.array(H)
 
     def find_parent_link_of_frame(self, name: str) -> str:
         """

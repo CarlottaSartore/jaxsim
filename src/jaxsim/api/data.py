@@ -39,7 +39,7 @@ class JaxSimModelData(common.ModelDataWithVelocityRepresentation):
         base_angular_velocity:
             The angular velocity of the base link in inertial-fixed representation.
         base_transform: The base transform.
-        joint_transforms: The joint transforms.
+        # joint_transforms: The joint transforms.
         link_transforms: The link transforms.
         link_velocities: The link velocities.
     """
@@ -55,12 +55,12 @@ class JaxSimModelData(common.ModelDataWithVelocityRepresentation):
     base_position: jtp.Vector
 
     # Joint state
-    joint_positions: jtp.Vector
-    joint_velocities: jtp.Vector
+    # joint_positions: jtp.Vector
+    # joint_velocities: jtp.Vector
 
     # Cached computations.
     base_transform: jtp.Matrix = dataclasses.field(repr=False, default=None)
-    joint_transforms: jtp.Matrix = dataclasses.field(repr=False, default=None)
+    # joint_transforms: jtp.Matrix = dataclasses.field(repr=False, default=None)
     link_transforms: jtp.Matrix = dataclasses.field(repr=False, default=None)
     link_velocities: jtp.Matrix = dataclasses.field(repr=False, default=None)
 
@@ -155,9 +155,9 @@ class JaxSimModelData(common.ModelDataWithVelocityRepresentation):
             is_force=False,
         ).astype(float)
 
-        joint_transforms = model.kin_dyn_parameters.joint_transforms(
-            joint_positions=joint_positions, base_transform=W_H_B
-        )
+        # joint_transforms = model.kin_dyn_parameters.joint_transforms(
+        #     joint_positions=joint_positions, base_transform=W_H_B
+        # )
 
         link_transforms, link_velocities = jaxsim.rbda.forward_kinematics_model(
             model=model,
@@ -178,7 +178,7 @@ class JaxSimModelData(common.ModelDataWithVelocityRepresentation):
             joint_velocities=joint_velocities,
             velocity_representation=velocity_representation,
             base_transform=W_H_B,
-            joint_transforms=joint_transforms,
+            # joint_transforms=joint_transforms,
             link_transforms=link_transforms,
             link_velocities=link_velocities,
         )
@@ -597,9 +597,9 @@ class JaxSimModelData(common.ModelDataWithVelocityRepresentation):
             translation=self.base_position, quaternion=self.base_quaternion
         )
 
-        joint_transforms = model.kin_dyn_parameters.joint_transforms(
-            joint_positions=self.joint_positions, base_transform=self.base_transform
-        )
+        # joint_transforms = model.kin_dyn_parameters.joint_transforms(
+        #     joint_positions=self.joint_positions, base_transform=self.base_transform
+        # )
 
         link_transforms, link_velocities = jaxsim.rbda.forward_kinematics_model(
             model=model,
@@ -613,7 +613,7 @@ class JaxSimModelData(common.ModelDataWithVelocityRepresentation):
 
         return self.replace(
             base_transform=base_transform,
-            joint_transforms=joint_transforms,
+            # joint_transforms=joint_transforms,
             link_transforms=link_transforms,
             link_velocities=link_velocities,
         )
