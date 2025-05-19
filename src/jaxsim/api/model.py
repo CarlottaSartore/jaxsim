@@ -388,6 +388,7 @@ class JaxSimModel(JaxsimDataclass):
         L_H_vises = []
         L_H_pre_masks = []
         L_H_pre = []
+        idx_direction_grow = []
 
         # Process each link
         for link_description in ordered_links:
@@ -457,16 +458,43 @@ class JaxSimModel(JaxsimDataclass):
                     for joint_index in range(0, self.number_of_joints())
                 ]
             )
-            L_H_pre.append(
-                [
-                    (
-                        self.kin_dyn_parameters.joint_model.λ_H_pre[joint_index + 1]
-                        if joint_index in child_joints_indices
-                        else jnp.eye(4)
-                    )
-                    for joint_index in range(0, self.number_of_joints())
-                ]
-            )
+            # L_H_pre.append(
+            #     [
+            #         (
+            #             self.kin_dyn_parameters.joint_model.λ_H_pre[joint_index + 1]
+            #             if joint_index in child_joints_indices
+            #             else jnp.eye(4)
+            #         )
+            #         for joint_index in range(0, self.number_of_joints())
+            #     ]
+            # )
+
+
+            current_L_H_pre = []
+            current_indices = []
+
+            for joint_index in range(self.number_of_joints()):
+                if joint_index in child_joints_indices:
+                    transform = self.kin_dyn_parameters.joint_model.λ_H_pre[joint_index + 1]
+                else:
+                    transform = jnp.eye(4)
+
+                # Store the transform
+                current_L_H_pre.append(transform)
+
+                # Compute index of first non-zero in column 3 (excluding last row)
+                col3 = transform[:-1, 3]
+                nonzero_mask = col3 != 0
+                idx = int(jnp.argmax(nonzero_mask))  # Convert to Python int (if running outside JIT)
+                # print(idx)
+                current_indices.append(idx)
+            L_H_pre.append(current_L_H_pre)
+            idx_direction_grow.append(current_indices)
+            # jax.debug.print("{}",current_indices)reset
+            # idx_generator.append()
+
+            # print(L_H_pre[joint_index] for joint_index in child_joints_indices)
+            
 
         # Stack collected data into JAX arrays
         return HwLinkMetadata(
@@ -477,6 +505,7 @@ class JaxSimModel(JaxsimDataclass):
             L_H_vis=jnp.array(L_H_vises, dtype=float),
             L_H_pre_mask=jnp.array(L_H_pre_masks, dtype=bool),
             L_H_pre=jnp.array(L_H_pre, dtype=float),
+            idx_direction_grow = jnp.array(idx_direction_grow, dtype=int),
         )
 
     def export_updated_model(self) -> str:

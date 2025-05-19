@@ -927,6 +927,7 @@ class HwLinkMetadata(JaxsimDataclass):
     L_H_vis: jtp.Matrix
     L_H_pre_mask: jtp.Vector
     L_H_pre: jtp.Matrix
+    idx_direction_grow:jtp.Vector
 
     @staticmethod
     def compute_mass_and_inertia(
@@ -1001,6 +1002,58 @@ class HwLinkMetadata(JaxsimDataclass):
         inertia = jnp.eye(3) * (2 / 5 * mass * r**2)
 
         return mass, inertia
+    
+    @staticmethod
+    def return_principal_direction(
+        shape, dims,
+    ) -> tuple[jtp.Float, jtp.Float]:
+        """
+        TODO
+        Compute the mass and inertia of a hardware link based on its metadata.
+
+        This function calculates the mass and inertia tensor of a hardware link
+        using its shape, dimensions, and density. The computation is performed
+        by using shape-specific methods.
+
+        Args:
+            hw_link_metadata: Metadata describing the hardware link,
+                including its shape, dimensions, and density.
+
+        Returns:
+            tuple: A tuple containing:
+                - mass: The computed mass of the hardware link.
+                - inertia: The computed inertia tensor of the hardware link.
+        """
+
+        principla_l_link, principal_l_joint = jax.lax.switch(
+            shape,
+            [
+                HwLinkMetadata._box_dim,
+                HwLinkMetadata._cylinder_dim,
+                HwLinkMetadata._sphere_dim,
+            ],
+            dims,
+        )
+        return principla_l_link, principal_l_joint
+
+    @staticmethod
+    def _box_dim(dims) -> tuple[jtp.Float, jtp.Matrix]:
+        lx, ly, lz = dims
+        
+        return lz/2,jnp.array([lx,ly,lz])   
+
+    @staticmethod
+    def _cylinder_dim(dims) -> tuple[jtp.Float, jtp.Matrix]:
+        r, l, _ = dims
+
+
+        return l/2,jnp.array([r,r,l])  
+
+    @staticmethod
+    def _sphere_dim(dims) -> tuple[jtp.Float, jtp.Matrix]:
+        r = dims[0]
+
+        return r,jnp.array([r,r,2*r])
 
     @staticmethod
     def _convert_scaling_to_3d_vector(
@@ -1122,14 +1175,18 @@ class HwLinkMetadata(JaxsimDataclass):
             # Get back to the link frame
             L_H̅_G = jaxsim.math.Transform.inverse(G_H̅_L)
             L_H̅_vis = L_H̅_G @ G_H̅_vis
-            L_H̅_pre_array = jax.vmap(lambda G_H̅_pre: L_H̅_G @ G_H̅_pre)(G_H̅_pre_array)
+           
+            L_H̅_pre_array_old = jax.vmap(lambda G_H̅_pre: L_H̅_G @ G_H̅_pre)(G_H̅_pre_array)
 
             # ============================
             # Update the shape parameters
             # ============================
 
             updated_dims = hw_metadata.dims * scaling_factors.dims
-
+            principla_l_link, principal_l_joint = HwLinkMetadata.return_principal_direction(hw_metadata.shape, updated_dims,)
+            L_H̅_vis= L_H̅_vis.at[2,3].set(jnp.sign(L_H̅_vis[2,3])*principla_l_link)
+            L_H̅_pre_array = jax.vmap(lambda L_H̅_pre, idx: L_H̅_pre.at[idx,3].set(jnp.sign(L_H̅_pre[idx,3])*principal_l_joint[idx]))(L_H̅_pre_array_old,hw_metadata.idx_direction_grow)
+        
             # ==============================
             # Scale the density of the link
             # ==============================
