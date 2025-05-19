@@ -1002,7 +1002,7 @@ class HwLinkMetadata(JaxsimDataclass):
         inertia = jnp.eye(3) * (2 / 5 * mass * r**2)
 
         return mass, inertia
-    
+
     @staticmethod
     def return_principal_direction(
         shape, dims,
@@ -1039,15 +1039,15 @@ class HwLinkMetadata(JaxsimDataclass):
     @staticmethod
     def _box_dim(dims) -> tuple[jtp.Float, jtp.Matrix]:
         lx, ly, lz = dims
-        
-        return lz/2,jnp.array([lx,ly,lz])   
+
+        return lz/2,jnp.array([lx,ly,lz])
 
     @staticmethod
     def _cylinder_dim(dims) -> tuple[jtp.Float, jtp.Matrix]:
         r, l, _ = dims
 
 
-        return l/2,jnp.array([r,r,l])  
+        return l/2,jnp.array([r,r,l])
 
     @staticmethod
     def _sphere_dim(dims) -> tuple[jtp.Float, jtp.Matrix]:
@@ -1175,7 +1175,7 @@ class HwLinkMetadata(JaxsimDataclass):
             # Get back to the link frame
             L_H̅_G = jaxsim.math.Transform.inverse(G_H̅_L)
             L_H̅_vis = L_H̅_G @ G_H̅_vis
-           
+
             L_H̅_pre_array_old = jax.vmap(lambda G_H̅_pre: L_H̅_G @ G_H̅_pre)(G_H̅_pre_array)
 
             # ============================
@@ -1186,7 +1186,7 @@ class HwLinkMetadata(JaxsimDataclass):
             principla_l_link, principal_l_joint = HwLinkMetadata.return_principal_direction(hw_metadata.shape, updated_dims,)
             L_H̅_vis= L_H̅_vis.at[2,3].set(jnp.sign(L_H̅_vis[2,3])*principla_l_link)
             L_H̅_pre_array = jax.vmap(lambda L_H̅_pre, idx: L_H̅_pre.at[idx,3].set(jnp.sign(L_H̅_pre[idx,3])*principal_l_joint[idx]))(L_H̅_pre_array_old,hw_metadata.idx_direction_grow)
-        
+
             # ==============================
             # Scale the density of the link
             # ==============================

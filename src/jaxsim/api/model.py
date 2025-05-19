@@ -494,7 +494,7 @@ class JaxSimModel(JaxsimDataclass):
             # idx_generator.append()
 
             # print(L_H_pre[joint_index] for joint_index in child_joints_indices)
-            
+
 
         # Stack collected data into JAX arrays
         return HwLinkMetadata(
